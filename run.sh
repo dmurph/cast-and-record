@@ -11,14 +11,6 @@ pkill ffmpeg
 echo "casting to name ${1}"
 echo "saving to file ${2}"
 
-ip=`ifconfig wlan0|grep -Po 'inet \K[\d.]+'`
-echo "got ip address:"
-echo $ip
-
-address="http://${ip}:8090/test.mp3"
-echo "connecting address"
-echo $address
-
 rm ffserver.log
 ffserver -d -f ffserver2.conf &>ffserver.log 2>&1 &
 serverpid=$!
@@ -34,7 +26,19 @@ echo $ffmpegpid
 echo "about to cast"
 
 sleep 2
-./cast --name "${1}" media play $address &>cast.log 2>&1 &
+until [ ! -z "$address" ]
+do
+	ip=`ifconfig wlan0|grep -Po 'inet \K[\d.]+'`
+	echo "got ip address:"
+	echo $ip
+	address="http://${ip}:8090/test.mp3"
+	echo "connecting address"
+	echo $address
+	sleep 2
+	echo "trying again"
+done
+
+./cast --name "${1}" media play $address &>cast.log 2>&1
 
 echo "done"
 
