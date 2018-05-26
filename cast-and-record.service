@@ -1,0 +1,9 @@
+[Unit]
+Description=cast-and-record
+
+[Service]
+WorkingDirectory=/home/pi/cast-and-record
+ExecStart=/bin/bash run.sh "Big Speakers" /media/pi/KINGSTON/set.mp3
+
+[Install]
+WantedBy=multi-user.target

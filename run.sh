@@ -1,6 +1,12 @@
-#!/usr/bin/env bash
-set -e
+#!/bin/bash
+
+
+# example usage: ./run.sh "Big Speakers" /media/pi/KINGSTON/set.mp3
 echo `pwd`
+
+echo "killing all old processes"
+pkill ffserver
+pkill ffmpeg
 
 echo "casting to name ${1}"
 echo "saving to file ${2}"
@@ -13,16 +19,23 @@ address="http://${ip}:8090/test.mp3"
 echo "connecting address"
 echo $address
 
-trap 'pkill ffserver; pkill ffmpeg; exit' SIGINT
-
-ffserver -d -f ffserver2.conf &
+rm ffserver.log
+ffserver -d -f ffserver2.conf &>ffserver.log 2>&1 &
 serverpid=$!
-sleep 5
-./cast --name "${1}" media play $address &
-
 echo "server pid "
 echo $serverpid
+
+rm ffmpeg.log
+ffmpeg -y -f alsa -ac 2 -i hw:0 http://127.0.0.1:8090/feed1.ffm -f mp3 -q:a 0 $2 &>ffmpeg.log 2>&1 &
+ffmpegpid=$!
 echo "ffmpeg pid "
 echo $ffmpegpid
 
-ffmpeg -y -f alsa -ac 2 -i hw:0 http://127.0.0.1:8090/feed1.ffm -f mp3 -q:a 0 $2
+echo "about to cast"
+
+sleep 2
+./cast --name "${1}" media play $address &>cast.log 2>&1 &
+
+echo "done"
+
+wait $ffmpegpid
